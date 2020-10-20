@@ -6,7 +6,7 @@
 // const socket = io("http://localhost:3000");
 
 /* [PUBLIC]: ONLINE (socket, listens for messages from the server) */
-const socket = io("https://warm-harbor-48465.herokuapp.com/");
+const socket = io("https://boiling-springs-78440.herokuapp.com/");
 
 /* [MESSAGES FROM SERVER]: Client handles incoming messages. */
 socket.on("init", handleInit);
