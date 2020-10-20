@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!-- 
+  Local/Development - Live share from here || Online - Front-end on Netlify 
+  Local/Development - Start sever with nodemon || Online - Back-end on Heroku
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Snake Showdown</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+      integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+      crossorigin="anonymous"
+    />
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0" /> -->
+    <link rel="shortcut icon" type="image/png" href="logo.png" />
+
+    <style>
+      body,
+      html {
+        overflow: hidden;
+        position: fixed;
+      }
+      #gameScreen {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="vh-100 vw-100" style="background-image: linear-gradient(to bottom right, green, black)">
+      <!-- green, red -->
+
+      <div id="contentContainer" class="container h-100 d-flex align-items-center justify-content-center">
+        <!-- row align-items-center col-6 mx-auto -->
+        <div id="card" class="card text-white jumbotron" style="background: #202020; border-radius: 20px">
+          <div id="initialScreen" class="h-100">
+            <div class="d-flex flex-column align-items-center justify-content-center h-100">
+              <h1 class="mb-5 font-weight-bold" style="font-family: Verdana">SNAKE SHOWDOWN</h1>
+              <container>
+                <h4 class="mb-5 mx-5 text-center">
+                  Win by collecting 15 food pieces or make your opponent run into your tail.
+                </h4>
+              </container>
+              <button type="submit" class="btn-lg btn-success" id="newGameButton">Create New Game</button>
+              <div class="my-2 font-weight-bold">OR</div>
+              <div class="form-group">
+                <input type="text" placeholder="Enter Game Code" id="gameCodeInput" style="border-radius: 5px" />
+              </div>
+              <button type="submit" class="btn-lg btn-success" id="joinGameButton">Join Game</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="gameScreen" class="h-100">
+          <div class="d-flex flex-column align-items-center justify-content-center h-100">
+            <h1 class="text-white">Game code: <span id="gameCodeDisplay"></span></h1>
+
+            <canvas id="canvas"></canvas>
+
+            <span class="scores text-white">
+              <span class="P1-snake" style="font-size: 50px">(0/15)</span>
+              <span class="P1 mx-5" style="font-size: 50px">P1: 0</span>
+              <span class="mx-5"></span>
+              <span class="P2 mx-5" style="font-size: 50px">P2: 0</span>
+              <span class="P2-snake" style="font-size: 50px">(0/15)</span>
+            </span>
+
+            <div
+              class="postGame"
+              style="
+                display: none;
+                width: 200px;
+                top: 40%;
+                background-color: rgba(205, 133, 63, 0.8);
+                position: absolute;
+                left: 50%;
+                margin-left: -100px;
+                padding-top: 50px;
+                padding-bottom: 50px;
+                text-align: center;
+                border-radius: 5px;
+                color: white;
+                font-size: 25px;
+              "
+            >
+              <div class="text mb-4"></div>
+              <span class="countdown"></span>
+              <button class="restartButton btn-lg btn-success mx-4" onClick="reloadPage()">Create New Game</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="client.js"></script>
+  </body>
+</html>

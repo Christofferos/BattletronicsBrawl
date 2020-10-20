@@ -1,0 +1,11 @@
+const FRAME_RATE = 11; // 12
+const GRID_SIZE = 25; // 30
+const WINNING_SCORE = 5;
+const DELAY_BETWEEN_ROUNDS = 6000;
+
+module.exports = {
+  FRAME_RATE,
+  GRID_SIZE,
+  WINNING_SCORE,
+  DELAY_BETWEEN_ROUNDS,
+};
