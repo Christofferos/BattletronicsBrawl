@@ -36,11 +36,11 @@ newGameButton.addEventListener("click", newGame);
 joinGameButton.addEventListener("click", joinGame);
 
 /* # Game Variables # */
-const BG_COLOR = "#231f20";
-const PLAYER_1_COLOR = "green"; //c2c2c2
-const PLAYER_2_COLOR = "red";
+const BG_COLOR = "black"; // #0e1d34
+const PLAYER_1_COLOR = "red"; //c2c2c2
+const PLAYER_2_COLOR = "green";
 const FLASH_COLOR = "white";
-const FOOD_COLOR = "#e66916";
+const POWER_UP_COLOR = "#e66916";
 let canvas, contex;
 let playerNumber;
 let gameActive = false;
@@ -58,7 +58,7 @@ function joinGame() {
   let code = gameCodeInput.value;
   if (code != null) if (code.charAt(0) == " ") code = code.slice(1, code.length);
   socket.emit("joinGame", code);
-  initializeGameWindow();
+  initializeGameWindow(); //
 }
 
 /* ## HandleGameCode: ## */
@@ -91,19 +91,137 @@ function initializeGameWindow() {
   contex.fillStyle = BG_COLOR;
   contex.fillRect(0, 0, canvas.width, canvas.height);
   //
-  document.addEventListener("keydown", keydown);
-  // Phone
-  document.addEventListener("touchstart", touchstart, false);
-  document.addEventListener("touchmove", touchmove, false);
-  document.addEventListener("touchend", touchend, false);
+  // document or window (what is the difference?)
+  window.addEventListener("keypressed", (e) => keypressed(e), false);
+  window.addEventListener("keyup", (e) => keyreleased(e), false);
   //
   gameActive = true;
 }
 
-/* ## Keydown: Tell server what keys are pressed by the user ## */
-function keydown(e) {
-  socket.emit("keydown", e.keyCode);
+// -----------------------------------------------
+
+/* ### DeltaTimer: used to remove delay that exists in keydown [100-230] ### */
+function DeltaTimer(render, interval) {
+  var timeout;
+  var lastTime;
+
+  this.start = start;
+  this.stop = stop;
+
+  function start() {
+    timeout = setTimeout(loop, 0);
+    lastTime = Date.now();
+    return lastTime;
+  }
+
+  function stop() {
+    clearTimeout(timeout);
+    return lastTime;
+  }
+
+  function loop() {
+    var thisTime = Date.now();
+    var deltaTime = thisTime - lastTime;
+    var delay = Math.max(interval - deltaTime, 0);
+    timeout = setTimeout(loop, delay);
+    lastTime = thisTime + delay;
+    render(thisTime);
+  }
 }
+
+// Using DeltaTimer...
+(function (interval) {
+  var keyboard = {};
+
+  window.addEventListener("keyup", keyup, false);
+  window.addEventListener("keydown", keydown, false);
+
+  function keyup(event) {
+    keyboard[event.keyCode].pressed = false;
+  }
+
+  function keydown(event) {
+    var keyCode = event.keyCode;
+    var key = keyboard[keyCode];
+
+    if (key) {
+      if (!key.start) key.start = key.timer.start();
+      key.pressed = true;
+    } else {
+      var timer = new DeltaTimer(function (time) {
+        if (key.pressed) {
+          var event = document.createEvent("Event");
+          event.initEvent("keypressed", true, true);
+          event.time = time - key.start;
+          event.keyCode = keyCode;
+          window.dispatchEvent(event);
+        } else {
+          key.start = 0;
+          timer.stop();
+        }
+      }, interval);
+
+      key = keyboard[keyCode] = {
+        pressed: true,
+        timer: timer,
+      };
+
+      key.start = timer.start();
+    }
+  }
+})(50);
+/* ##### */
+
+/* ## event.keyCode is depricated - can lead to issues in the future. ## */
+function keypressed(event) {
+  switch (event.keyCode) {
+    case 37:
+      // console.log("LEFT");
+      socket.emit("keypressed", 37);
+      break;
+    case 38:
+      // console.log("UP");
+      socket.emit("keypressed", 38);
+      break;
+    case 39:
+      // console.log("RIGHT");
+      socket.emit("keypressed", 39);
+      break;
+    case 40:
+      // console.log("DOWN");
+      socket.emit("keypressed", 40);
+      break;
+  }
+}
+
+function keyreleased(event) {
+  const states = {
+    left: event.code == "ArrowLeft",
+    up: event.code == "ArrowUp",
+    right: event.code == "ArrowRight",
+    down: event.code == "ArrowDown",
+  };
+  switch (true) {
+    case states.left:
+      // console.log("LEFT");
+      socket.emit("keyreleased", 37);
+      break;
+    case states.up:
+      // console.log("UP");
+      socket.emit("keyreleased", 38);
+      break;
+    case states.right:
+      // console.log("RIGHT");
+      socket.emit("keyreleased", 39);
+      break;
+    case states.down:
+      // console.log("DOWN");
+      socket.emit("keyreleased", 40);
+      break;
+  }
+}
+
+// -----------------------------------------
 
 /* ## PaintGame: Draw game window ## */
 function paintGame(state) {
@@ -112,37 +230,34 @@ function paintGame(state) {
 
   const food = state.food;
   const gridsize = state.gridsize;
-  const size = canvas.width / gridsize;
+  const minAnimationSize = canvas.width / gridsize;
+  const playerSize = minAnimationSize * 4;
 
-  contex.fillStyle = FOOD_COLOR;
-  contex.fillRect(food.x * size, food.y * size, size, size);
+  contex.fillStyle = POWER_UP_COLOR;
+  contex.fillRect(food.x * minAnimationSize, food.y * minAnimationSize, minAnimationSize, minAnimationSize);
 
-  paintPlayer(state.players[0], size, PLAYER_1_COLOR);
+  paintPlayer(state.players[0], minAnimationSize, playerSize, PLAYER_1_COLOR);
   // Add a flash, the first round to indicate which snake this client controls.
   if (playerNumber == 1 && flash < 2) {
     setTimeout(() => {
-      paintPlayer(state.players[0], size, FLASH_COLOR);
+      paintPlayer(state.players[0], minAnimationSize, playerSize, FLASH_COLOR);
     }, 150);
     flash++;
   }
-  paintPlayer(state.players[1], size, PLAYER_2_COLOR);
+  paintPlayer(state.players[1], minAnimationSize, playerSize, PLAYER_2_COLOR);
   // Add a flash.
   if (playerNumber == 2 && flash < 2) {
     setTimeout(() => {
-      paintPlayer(state.players[1], size, FLASH_COLOR);
+      paintPlayer(state.players[1], minAnimationSize, playerSize, FLASH_COLOR);
     }, 150);
     flash++;
   }
 }
 
 /* ## PaintPlayer: ## */
-function paintPlayer(playerState, size, color) {
-  const snake = playerState.snake;
+function paintPlayer(playerState, minAnimationSize, size, color) {
   contex.fillStyle = color;
-
-  for (let cell of snake) {
-    contex.fillRect(cell.x * size, cell.y * size, size, size);
-  }
+  contex.fillRect(playerState.pos.x * minAnimationSize, playerState.pos.y * minAnimationSize, size, size);
 }
 
 /* ## HandleInit: ## */
@@ -158,8 +273,8 @@ function handleGameState(gameState) {
   gameState = JSON.parse(gameState);
 
   // Update the number of food pieces each player have eaten.
-  scoreboard.querySelector(".P1-snake").innerText = "(" + gameState.players[0].foodCollected + "/15)";
-  scoreboard.querySelector(".P2-snake").innerText = "(" + gameState.players[1].foodCollected + "/15)";
+  // scoreboard.querySelector(".P1-snake").innerText = "(" + gameState.players[0].lives + "/15)";
+  // scoreboard.querySelector(".P2-snake").innerText = "(" + gameState.players[1].lives + "/15)";
 
   requestAnimationFrame(() => paintGame(gameState));
 }
@@ -179,15 +294,15 @@ function handleGameOver(data) {
   if (Math.max(data.score.P1, data.score.P2) >= winningScore) {
     gameActive = false;
     if (data.score.P1 == data.score.P2) {
-      postGameCardText.innerText = "YOU TIED 1st PLACE!";
+      postGameCardText.innerText = "The environment won this time around!";
     } else if (data.score.P1 > data.score.P2) {
-      scoreboard.querySelector(".P1").style.color = "green";
-      if (playerNumber == 1) postGameCardText.innerText = "You won: You are the superior snake duelist.";
-      if (playerNumber == 2) postGameCardText.innerText = "You lost: Better luck next time.";
+      // scoreboard.querySelector(".P1").style.color = "green";
+      if (playerNumber == 1) postGameCardText.innerText = "Congratulations, you won this war!";
+      if (playerNumber == 2) postGameCardText.innerText = "You are defeated!";
     } else if (data.score.P2 > data.score.P1) {
-      scoreboard.querySelector(".P2").style.color = "green";
-      if (playerNumber == 1) postGameCardText.innerText = "You lost: Better luck next time.";
-      if (playerNumber == 2) postGameCardText.innerText = "You won: You are the superior snake duelist.";
+      // scoreboard.querySelector(".P2").style.color = "green";
+      if (playerNumber == 1) postGameCardText.innerText = "You are defeated!";
+      if (playerNumber == 2) postGameCardText.innerText = "Congratulations, you won this war!";
     }
     postGameRestartButton.style.display = "block";
     playerNumber = null;
@@ -210,6 +325,7 @@ function reset() {
   playerNumber = null;
   gameCodeInput.value = "";
   initialScreen.style.display = "block";
+  document.getElementById("card").style.display = "block";
   gameScreen.style.display = "none";
 }
 
@@ -231,52 +347,4 @@ function startCountdown() {
 function reloadPage() {
   reset();
   location.reload();
-}
-
-/* ## MOBILE ## */
-let swipedir,
-  startX,
-  startY,
-  distX,
-  distY,
-  threshold = 25, //required min distance traveled to be considered swipe
-  restraint = 100, // maximum distance allowed at the same time in perpendicular direction
-  allowedTime = 300, // maximum time allowed to travel that distance
-  elapsedTime,
-  startTime;
-
-let handleswipe = (swipedir) => {
-  if (swipedir == "up" || swipedir == "down" || swipedir == "left" || swipedir == "right") {
-    socket.emit("phoneSwipe", swipedir);
-  }
-};
-
-function touchstart(e) {
-  let touchobj = e.changedTouches[0];
-  swipedir = "none";
-  dist = 0;
-  startX = touchobj.pageX;
-  startY = touchobj.pageY;
-  startTime = new Date().getTime(); // record time when finger first makes contact with surface
-  e.preventDefault();
-}
-
-function touchmove(e) {
-  e.preventDefault();
-}
-
-function touchend(e) {
-  let touchobj = e.changedTouches[0];
-  distX = touchobj.pageX - startX; // get horizontal dist traveled by finger while in contact with surface
-  distY = touchobj.pageY - startY; // get vertical dist traveled by finger while in contact with surface
-  elapsedTime = new Date().getTime() - startTime;
-  if (elapsedTime <= allowedTime) {
-    if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint) {
-      swipedir = distX < 0 ? "left" : "right"; // if dist traveled is negative, it indicates a swipe to the left
-    } else if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint) {
-      swipedir = distY < 0 ? "up" : "down"; // if dist traveled is negative, it indicates a swipe upwards
-    }
-  }
-  handleswipe(swipedir);
-  e.preventDefault();
 }

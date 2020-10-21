@@ -1,6 +1,6 @@
 /* # Game Variables # */
 const io = require("socket.io")();
-const { initGame, gameLoop, getUpdatedVelocity, getUpdatedVelocitySwipe } = require("./game");
+const { initGame, gameLoop, keyPressed, keyReleased, calculateDirection } = require("./game");
 const { FRAME_RATE, WINNING_SCORE, DELAY_BETWEEN_ROUNDS } = require("./constants");
 const { makeid } = require("./utils");
 
@@ -9,14 +9,13 @@ const clientRooms = {};
 
 /* ## Connection: ## */
 io.on("connection", (client) => {
-  client.on("keydown", handleKeydown);
-  client.on("phoneSwipe", handlePhoneSwipe);
+  client.on("keypressed", handleKeyPressed);
+  client.on("keyreleased", handleKeyReleased);
   client.on("newGame", handleNewGame);
   client.on("joinGame", handleJoinGame);
 
   function handleJoinGame(roomName) {
     const room = io.sockets.adapter.rooms[roomName];
-
     let allUsers;
     if (room) {
       allUsers = room.sockets;
@@ -36,16 +35,14 @@ io.on("connection", (client) => {
     }
 
     clientRooms[client.id] = roomName;
-
     client.join(roomName);
     client.number = 2;
     client.emit("init", 2);
-
     startGameInterval(roomName);
   }
 
   function handleNewGame() {
-    let roomName = makeid(3); // 5
+    let roomName = makeid(3);
     clientRooms[client.id] = roomName;
     client.emit("gameCode", roomName);
 
@@ -56,16 +53,8 @@ io.on("connection", (client) => {
     client.emit("init", 1);
   }
 
-  function delayKeyDownInput(roomName) {
-    if (state[roomName] == null) return;
-    state[roomName].players[client.number - 1].inputDelay = true;
-    setTimeout(() => {
-      if (state[roomName] == null) return;
-      state[roomName].players[client.number - 1].inputDelay = false;
-    }, 75);
-  }
-
-  function handleKeydown(keyCode) {
+  // ## handleKeyPressed
+  function handleKeyPressed(keyCode) {
     const roomName = clientRooms[client.id];
     if (!roomName || state[roomName] == null) {
       return;
@@ -76,26 +65,22 @@ io.on("connection", (client) => {
       console.error(e);
       return;
     }
-
-    const vel = getUpdatedVelocity(keyCode, state[roomName].players[client.number - 1]);
-
-    if (vel !== -1 && state[roomName].players[client.number - 1].inputDelay == false && state[roomName] !== null) {
-      state[roomName].players[client.number - 1].vel = vel;
-      delayKeyDownInput(roomName);
-    }
+    keyPressed(keyCode, state[roomName].players[client.number - 1]);
   }
 
-  function handlePhoneSwipe(swipeDir) {
+  // ## handleKeyReleased
+  function handleKeyReleased(keyCode) {
     const roomName = clientRooms[client.id];
     if (!roomName || state[roomName] == null) {
       return;
     }
-
-    const vel = getUpdatedVelocitySwipe(swipeDir, state[roomName].players[client.number - 1]);
-
-    if (vel !== -1 && state[roomName] !== null) {
-      state[roomName].players[client.number - 1].vel = vel;
+    try {
+      keyCode = parseInt(keyCode);
+    } catch (e) {
+      console.error(e);
+      return;
     }
+    keyReleased(keyCode, state[roomName].players[client.number - 1]);
   }
 });
 
@@ -121,10 +106,8 @@ function startGameInterval(roomName) {
           DELAY_BETWEEN_ROUNDS
         );
       } else {
-        // console.log("SERVER END GAME" + WINNING_SCORE);
         state[roomName] = null;
       }
-      //
     }
   }
 }

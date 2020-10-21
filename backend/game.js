@@ -3,8 +3,9 @@ const { GRID_SIZE } = require("./constants");
 module.exports = {
   initGame,
   gameLoop,
-  getUpdatedVelocity,
-  getUpdatedVelocitySwipe,
+  calculateDirection,
+  keyPressed,
+  keyReleased,
 };
 
 function initGame(scores) {
@@ -18,45 +19,31 @@ function createGameState(scoreInput) {
     players: [
       {
         id: 1,
-        inputDelay: false,
+        fireRateDelay: 100,
         pos: {
-          x: 3,
-          y: 10,
+          x: 1,
+          y: 1,
         },
-        vel: {
+        directionPreference: [],
+        dir: {
           x: 0,
           y: 0,
         },
-        snake: [
-          { x: -2, y: 10 },
-          { x: -1, y: 10 },
-          { x: 0, y: 10 },
-          { x: 1, y: 10 },
-          { x: 2, y: 10 },
-          { x: 3, y: 10 },
-        ],
-        foodCollected: 0,
+        lives: 0,
       },
       {
         id: 2,
-        inputDelay: false,
+        fireRateDelay: 100,
         pos: {
-          x: 21,
-          y: 10,
+          x: 23,
+          y: 23,
         },
-        vel: {
+        directionPreference: [],
+        dir: {
           x: 0,
           y: 0,
         },
-        snake: [
-          { x: 26, y: 10 },
-          { x: 25, y: 10 },
-          { x: 24, y: 10 },
-          { x: 23, y: 10 },
-          { x: 22, y: 10 },
-          { x: 21, y: 10 },
-        ],
-        foodCollected: 0,
+        lives: 0,
       },
     ],
     food: {},
@@ -69,15 +56,16 @@ function gameLoop(state) {
   if (!state) {
     return;
   }
-
   const playerOne = state.players[0];
   const playerTwo = state.players[1];
 
-  playerOne.pos.x += playerOne.vel.x;
-  playerOne.pos.y += playerOne.vel.y;
+  // Move P1
+  playerOne.pos.x += playerOne.dir.x;
+  playerOne.pos.y += playerOne.dir.y;
 
-  playerTwo.pos.x += playerTwo.vel.x;
-  playerTwo.pos.y += playerTwo.vel.y;
+  // Move P2
+  playerTwo.pos.x += playerTwo.dir.x;
+  playerTwo.pos.y += playerTwo.dir.y;
 
   /* [OUT OF BOUNDS] */
   if (
@@ -100,76 +88,46 @@ function gameLoop(state) {
 
   /* [FOOD EATEN] */
   if (state.food.x === playerOne.pos.x && state.food.y === playerOne.pos.y) {
-    playerOne.snake.push({ ...playerOne.pos });
-    playerOne.pos.x += playerOne.vel.x;
-    playerOne.pos.y += playerOne.vel.y;
-    state.players[0].foodCollected++;
+    // if () playerOne.lives++;
+    playerOne.pos.x += playerOne.dir.x;
+    playerOne.pos.y += playerOne.dir.y;
+    state.players[0].lives++;
     randomFood(state);
   }
   if (state.food.x === playerTwo.pos.x && state.food.y === playerTwo.pos.y) {
-    playerTwo.snake.push({ ...playerTwo.pos });
-    playerTwo.pos.x += playerTwo.vel.x;
-    playerTwo.pos.y += playerTwo.vel.y;
-    state.players[1].foodCollected++;
+    // if () playerTwo.lives++;
+    playerTwo.pos.x += playerTwo.dir.x;
+    playerTwo.pos.y += playerTwo.dir.y;
+    state.players[1].lives++;
     randomFood(state);
   }
 
   /* ## IMPORTANT for P1 ## */
-  if (playerOne.vel.x || playerOne.vel.y) {
-    if (playerOne.foodCollected >= 15) {
-      return 1;
+  if (playerOne.dir.x || playerOne.dir.y) {
+    if (playerOne.lives >= 15) {
+      return 1; // ## Make it so that gold can be collected, and upgrade some feature in-game. ##
     }
-    // MOVE INTO TAIL
-    for (let cell of playerOne.snake) {
-      if (cell.x === playerOne.pos.x && cell.y === playerOne.pos.y) {
-        return 2;
+    // ## Hit by bullet ##
+    /* for (let bullet of playerTwo.bullets) {
+      if (bullet.x === playerOne.pos.x && bullet.y === playerOne.pos.y) {
+        playerOne.lives--;
+        // if (lievs == 0) return 2;
       }
-    }
-    for (let i = 0; i < playerTwo.snake.length; i++) {
-      let cell = playerTwo.snake[i];
-      const headIndex = playerTwo.snake.length - 1;
-      if (i !== headIndex) {
-        if (cell.x === playerOne.pos.x && cell.y === playerOne.pos.y) {
-          return 2;
-        }
-      } else if (i == headIndex) {
-        if (cell.x === playerOne.pos.x && cell.y === playerOne.pos.y) {
-          return -1;
-        }
-      }
-    }
-    // MOVE PLAYER1
-    playerOne.snake.push({ ...playerOne.pos });
-    playerOne.snake.shift();
+    } */
   }
 
   /* ## IMPORTANT for P2 ## */
-  if (playerTwo.vel.x || playerTwo.vel.y) {
-    if (playerTwo.foodCollected >= 15) {
+  if (playerTwo.dir.x || playerTwo.dir.y) {
+    if (playerTwo.lives >= 15) {
       return 2;
     }
-    // MOVE INTO TAIL
-    for (let cell of playerTwo.snake) {
-      if (cell.x === playerTwo.pos.x && cell.y === playerTwo.pos.y) {
-        return 1;
+    // ## Hit by bullet ##
+    /* for (let bullet of playerTwo.bullets) {
+      if (bullet.x === playerOne.pos.x && bullet.y === playerOne.pos.y) {
+        playerOne.lives--;
+        // if (lievs == 0) return 2;
       }
-    }
-    for (let i = 0; i < playerOne.snake.length; i++) {
-      let cell = playerOne.snake[i];
-      const headIndex = playerOne.snake.length - 1;
-      if (i !== headIndex) {
-        if (cell.x === playerTwo.pos.x && cell.y === playerTwo.pos.y) {
-          return 1;
-        }
-      } else if (i == headIndex) {
-        if (cell.x === playerTwo.pos.x && cell.y === playerTwo.pos.y) {
-          return -1;
-        }
-      }
-    }
-    // MOVE PLAYER2
-    playerTwo.snake.push({ ...playerTwo.pos });
-    playerTwo.snake.shift();
+    } */
   }
 
   /* [NO SPECIAL INTERACTION FOUND] */
@@ -181,81 +139,72 @@ function randomFood(state) {
     x: Math.floor(1 + Math.random() * (GRID_SIZE - 2)),
     y: Math.floor(1 + Math.random() * (GRID_SIZE - 2)),
   };
-
-  for (let cell of state.players[0].snake) {
-    if (cell.x === food.x && cell.y === food.y) {
-      return randomFood(state);
-    }
-  }
-
-  for (let cell of state.players[1].snake) {
-    if (cell.x === food.x && cell.y === food.y) {
-      return randomFood(state);
-    }
+  if (
+    (state.players[0].pos.x === food.x && state.players[0].pos.y === food.y) ||
+    (state.players[1].pos.x === food.x && state.players[1].pos.y === food.y)
+  ) {
+    return randomFood(state);
   }
   state.food = food;
 }
 
-function getUpdatedVelocity(keyCode, player) {
-  switch (keyCode) {
-    case 37: {
-      // Left
-      if (!(player.vel.x > 0)) {
-        if (player.vel.x == 0 && player.vel.y == 0 && player.id == 1) return -1; // Disallow left on start.
-        return { x: -1, y: 0 };
-      } else return -1;
-    }
-    case 38: {
-      // Down
-      if (!(player.vel.y > 0)) {
-        return { x: 0, y: -1 };
-      } else return -1;
-    }
-    case 39: {
-      // Right
-      if (!(player.vel.x < 0)) {
-        if (player.vel.x == 0 && player.vel.y == 0 && player.id == 2) return -1; // Disallow right on start.
-        return { x: 1, y: 0 };
-      } else return -1;
-    }
-    case 40: {
-      // Up
-      if (!(player.vel.y < 0)) {
-        return { x: 0, y: 1 };
-      } else return -1;
-    }
-    default: {
-      return -1;
-    }
+function keyPressed(keyCode, player) {
+  if (!player.directionPreference.includes(keyCode)) {
+    player.directionPreference.push(keyCode);
   }
+  const dir = calculateDirection(player);
+  player.dir.x = dir[0];
+  player.dir.y = dir[1];
 }
 
-function getUpdatedVelocitySwipe(swipeDir, player) {
-  switch (swipeDir) {
-    case "left": {
-      if (!(player.vel.x > 0)) {
-        if (player.vel.x == 0 && player.vel.y == 0 && player.id == 1) return -1; // Disallow left on start.
-        return { x: -1, y: 0 };
-      } else return -1;
+function keyReleased(keyCode, player) {
+  if (player.directionPreference.includes(keyCode)) {
+    const newDirectionPreference = [];
+    const searchValue = keyCode;
+    for (let i = 0; i < player.directionPreference.length; i++) {
+      if (player.directionPreference[i] !== searchValue) {
+        newDirectionPreference.push(player.directionPreference[i]);
+      }
     }
-    case "up": {
-      if (!(player.vel.y > 0)) {
-        return { x: 0, y: -1 };
-      } else return -1;
-    }
-    case "right": {
-      if (!(player.vel.x < 0)) {
-        if (player.vel.x == 0 && player.vel.y == 0 && player.id == 2) return -1; // Disallow right on start.
-        return { x: 1, y: 0 };
-      } else return -1;
-    }
-    case "down": {
-      if (!(player.vel.y < 0)) {
-        return { x: 0, y: 1 };
-      } else return -1;
-    }
-    default: {
-      return -1;
+    player.directionPreference = newDirectionPreference;
+  }
+  const dir = calculateDirection(player);
+  player.dir.x = dir[0];
+  player.dir.y = dir[1];
+}
+
+function calculateDirection(player) {
+  let dx = 0;
+  let dy = 0;
+  if (player.directionPreference.length > 0) {
+    const dir = player.directionPreference[player.directionPreference.length - 1];
+    switch (dir) {
+      // Left
+      case 37: {
+        dx = -1;
+        return [dx, dy];
+      }
+      // Up
+      case 38: {
+        dy = -1;
+        return [dx, dy];
+      }
+      // Right
+      case 39: {
+        dx = 1;
+        return [dx, dy];
+      }
+      // Down
+      case 40: {
+        dy = 1;
+        return [dx, dy];
+      }
     }
   }
+  return [0, 0];
 }
+
+/* Pair dxdy = player1.calculateDirection();
+if (!collisionDetection.collision(1, false)) {
+    player1.move(dxdy.dx, dxdy.dy);
+} */
