@@ -1,3 +1,5 @@
+/* ### Constants that can be used in any other file ### */
+
 const FRAME_RATE = 60; // 11 (greater value: faster)
 const GRID_SIZE = 100; // 25 (greater value: smaller blocks)
 const WINNING_SCORE = 5;

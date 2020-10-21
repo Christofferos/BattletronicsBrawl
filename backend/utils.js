@@ -2,6 +2,7 @@ module.exports = {
   makeid,
 };
 
+/* ### [Makeid]: Creates passwords for rooms that exist in the server. ### */
 function makeid(length) {
   var result = "";
   var characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

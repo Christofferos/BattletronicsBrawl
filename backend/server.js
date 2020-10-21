@@ -1,19 +1,34 @@
-/* # Game Variables # */
+/* # Import dependencies # */
 const io = require("socket.io")();
-const { initGame, gameLoop, keyPressed, keyReleased, calculateDirection } = require("./game");
+const { initGame, gameLoop, keyPressed, keyReleased } = require("./game");
 const { FRAME_RATE, WINNING_SCORE, DELAY_BETWEEN_ROUNDS } = require("./constants");
 const { makeid } = require("./utils");
 
+/* ### Crucial constants ### */
 const state = {};
 const clientRooms = {};
 
-/* ## Connection: ## */
+/* ### [Connection]: While atleast one client is connected to server. ### */
 io.on("connection", (client) => {
-  client.on("keypressed", handleKeyPressed);
-  client.on("keyreleased", handleKeyReleased);
   client.on("newGame", handleNewGame);
   client.on("joinGame", handleJoinGame);
+  client.on("keypressed", handleKeyPressed);
+  client.on("keyreleased", handleKeyReleased);
 
+  /* ### [HandleNewGame]: ### */
+  function handleNewGame() {
+    let roomName = makeid(3);
+    clientRooms[client.id] = roomName;
+    client.emit("gameCode", roomName);
+
+    state[roomName] = initGame([0, 0]);
+
+    client.join(roomName);
+    client.number = 1;
+    client.emit("init", 1);
+  }
+
+  /* ### [HandleJoinGame]: ### */
   function handleJoinGame(roomName) {
     const room = io.sockets.adapter.rooms[roomName];
     let allUsers;
@@ -25,7 +40,6 @@ io.on("connection", (client) => {
     if (allUsers) {
       numClients = Object.keys(allUsers).length;
     }
-
     if (numClients === 0) {
       client.emit("unknownCode");
       return;
@@ -41,19 +55,7 @@ io.on("connection", (client) => {
     startGameInterval(roomName);
   }
 
-  function handleNewGame() {
-    let roomName = makeid(3);
-    clientRooms[client.id] = roomName;
-    client.emit("gameCode", roomName);
-
-    state[roomName] = initGame([0, 0]);
-
-    client.join(roomName);
-    client.number = 1;
-    client.emit("init", 1);
-  }
-
-  // ## handleKeyPressed
+  /* ### [HandleKeyPressed]: ### */
   function handleKeyPressed(keyCode) {
     const roomName = clientRooms[client.id];
     if (!roomName || state[roomName] == null) {
@@ -68,7 +70,7 @@ io.on("connection", (client) => {
     keyPressed(keyCode, state[roomName].players[client.number - 1]);
   }
 
-  // ## handleKeyReleased
+  /* ### [HandleKeyReleased]: ### */
   function handleKeyReleased(keyCode) {
     const roomName = clientRooms[client.id];
     if (!roomName || state[roomName] == null) {
@@ -84,13 +86,12 @@ io.on("connection", (client) => {
   }
 });
 
-/* ## StartGameInterval: ## */
+/* ### [StartGameInterval]: Loops until game over.  ### */
 function startGameInterval(roomName) {
   let intervalId = setInterval(() => intervalIdProcedure(), 1000 / FRAME_RATE);
 
   function intervalIdProcedure() {
     let winner = gameLoop(state[roomName]);
-
     if (!winner) {
       emitGameState(roomName, state[roomName]);
     } else {
@@ -112,16 +113,15 @@ function startGameInterval(roomName) {
   }
 }
 
-/* ## EmitGameState: ## */
+/* ### [EmitGameState]: Sends to all clients ### */
 function emitGameState(room, gameState) {
-  // Send this event to everyone in the room.
   io.sockets.in(room).emit("gameState", JSON.stringify(gameState));
 }
 
-/* ## EmitGameOver: ## */
+/* ### [EmitGameOver]: Sends to all clients ### */
 function emitGameOver(room, winner, score) {
   io.sockets.in(room).emit("gameOver", JSON.stringify({ winner, score }));
 }
 
-/* ## Listen on provided PORT: ## */
+/* ## Listen on PORT provided by Heroku (or 3000 if local): ## */
 io.listen(process.env.PORT || 3000);

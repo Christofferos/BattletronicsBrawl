@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <!-- 
-  Local/Development - Live share from here || Online - Front-end on Netlify 
-  Local/Development - Start sever with nodemon || Online - Back-end on Heroku
+  Local - Start frontend with "Live Share" from this file. 
+  Local - Start backend with "nodemon sever".
+  ------------
+  Online - Frontend on Netlify.
+  Online - Backend on Heroku.
 -->
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <title>Battletronics Brawl</title>
+    <link rel="shortcut icon" type="image/png" href="icon.png" />
+
+    <!-- Import Bootstrap dependencies -->
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
       integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
       crossorigin="anonymous"
     />
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0" /> -->
-    <link rel="shortcut icon" type="image/png" href="icon.png" />
+    <!-- --------- -->
 
     <style>
-      body,
-      html {
-        overflow: hidden;
-        position: fixed;
-      }
       #gameScreen {
         display: none;
       }
@@ -29,11 +30,10 @@
   </head>
   <body>
     <section class="vh-100 vw-100" style="background-image: linear-gradient(to bottom right, #050a28, #1a1a1a)">
-      <!-- 050A28, 0E1D34, 1A1A1A-->
+      <!-- Color scheme: 050A28, 0E1D34, 1A1A1A-->
       <!-- green, red -->
 
       <div id="contentContainer" class="container h-100 d-flex align-items-center justify-content-center">
-        <!-- row align-items-center col-6 mx-auto -->
         <div id="card" class="card text-white jumbotron" style="background: #0e1d34; border-radius: 20px">
           <div id="initialScreen" class="h-100">
             <div class="d-flex flex-column align-items-center justify-content-center h-100">
@@ -84,7 +84,7 @@
                 display: none;
                 width: 200px;
                 top: 40%;
-                background-color: rgba(205, 133, 63, 0.8);
+                background-color: rgba(14, 29, 52, 0.8);
                 position: absolute;
                 left: 50%;
                 margin-left: -100px;
@@ -105,7 +105,9 @@
       </div>
     </section>
 
+    <!-- Import socket.io dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <!-- Run the client code -->
     <script src="client.js"></script>
   </body>
 </html>

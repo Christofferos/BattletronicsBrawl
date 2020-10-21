@@ -1,19 +1,22 @@
+/* ### Import constants ### */
 const { GRID_SIZE } = require("./constants");
 
+/* ### Make functions accessable from other files ### */
 module.exports = {
   initGame,
   gameLoop,
-  calculateDirection,
   keyPressed,
   keyReleased,
 };
 
+/* ### [InitGame]: Invoked by client via server ### */
 function initGame(scores) {
   const state = createGameState(scores);
   randomFood(state);
   return state;
 }
 
+/* ### [CreateGameState]: "state" is passed along to server and client. ### */
 function createGameState(scoreInput) {
   return {
     players: [
@@ -30,6 +33,7 @@ function createGameState(scoreInput) {
           y: 0,
         },
         lives: 0,
+        //size: ,
       },
       {
         id: 2,
@@ -44,6 +48,7 @@ function createGameState(scoreInput) {
           y: 0,
         },
         lives: 0,
+        //size: ,
       },
     ],
     food: {},
@@ -52,6 +57,9 @@ function createGameState(scoreInput) {
   };
 }
 
+// ---------------------------------------------
+
+/* ### [GameLoop]: Loops until game over. ### */
 function gameLoop(state) {
   if (!state) {
     return;
@@ -133,6 +141,8 @@ function gameLoop(state) {
   /* [NO SPECIAL INTERACTION FOUND] */
   return false;
 }
+
+// ---------------------------------------------
 
 function randomFood(state) {
   food = {
