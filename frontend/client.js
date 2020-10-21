@@ -3,9 +3,9 @@
 //*/
 
 /* ### [DEVELOPMENT]: LOCAL ### */
-// const socket = io("http://localhost:3000");
+const socket = io("http://localhost:3000");
 /* ### [DEPLOYMENT]: ONLINE ### */
-const socket = io("https://boiling-springs-78440.herokuapp.com/");
+// const socket = io("https://boiling-springs-78440.herokuapp.com/");
 
 // ------------------------------------------------------------------
 
