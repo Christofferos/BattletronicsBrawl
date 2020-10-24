@@ -43,7 +43,7 @@ const BG_COLOR = "black"; // #0e1d34
 const PLAYER_1_COLOR = "red"; //c2c2c2
 const PLAYER_2_COLOR = "green";
 const FLASH_COLOR = "white";
-const POWER_UP_COLOR = "#e66916";
+const POWER_UP_COLOR = "#6600ff";
 const WALL_COLOR = "white"; //"#151515";
 
 let canvas, contex;
@@ -148,21 +148,81 @@ function paintGame(state) {
   contex.fillStyle = POWER_UP_COLOR;
   contex.fillRect(food.x * gridRatio, food.y * gridRatio, gridRatio * 2, gridRatio * 2);
 
-  // WALLS
+  // BULLETS
+  // -------
+  contex.fillStyle = "#ff6600";
+  for (let i = 0; i < state.players[0].bullets.length; i++) {
+    contex.fillRect(
+      state.players[0].bullets[i].x * gridRatio,
+      state.players[0].bullets[i].y * gridRatio,
+      gridRatio * 2,
+      gridRatio * 2
+    );
+  }
+  for (let i = 0; i < state.players[1].bullets.length; i++) {
+    contex.fillRect(
+      state.players[1].bullets[i].x * gridRatio,
+      state.players[1].bullets[i].y * gridRatio,
+      gridRatio * 2,
+      gridRatio * 2
+    );
+  }
+  // -------
+
+  // WALLS SOLID
   contex.fillStyle = WALL_COLOR;
   if (state.walls.solid.length !== 0) {
-    const arr = state.walls.solid;
-    arr.forEach((wall) => {
+    state.walls.solid.forEach((wall) => {
+      contex.fillRect(wall.x * gridRatio, wall.y * gridRatio, wallSize, wallSize);
+    });
+  }
+
+  // WALLS MOVABLE
+  contex.fillStyle = "#ccccff";
+  if (state.walls.movable.length !== 0) {
+    state.walls.movable.forEach((wall) => {
       contex.fillRect(wall.x * gridRatio, wall.y * gridRatio, wallSize, wallSize);
     });
   }
 
   // PLAYERS
+  // -------
+  // P1
   contex.fillStyle = PLAYER_1_COLOR;
   contex.fillRect(state.players[0].pos.x * gridRatio, state.players[0].pos.y * gridRatio, playerSize, playerSize);
+  // P1 Lives
+  if (state.players[0].lives > 0)
+    for (let i = 0; i < state.players[0].lives; i++) {
+      contex.fillRect(state.players[0].pos.x * gridRatio + i * 5, state.players[0].pos.y * gridRatio - 3, 2, 2);
+    }
+  // P1 Inventory
+  contex.fillStyle = "#66ffff";
+  for (let i = 0; i < state.players[0].inventorySpace; i++) {
+    contex.fillRect(state.players[0].pos.x * gridRatio + 36, state.players[0].pos.y * gridRatio + 5 * i, 2, 2);
+  }
+  // P1 Reload
+  contex.fillStyle = "#ffff00";
+  if (state.players[0].reload == false)
+    contex.fillRect(state.players[0].pos.x * gridRatio - 3, state.players[0].pos.y * gridRatio + 3, 2, 4);
 
+  // P2
   contex.fillStyle = PLAYER_2_COLOR;
   contex.fillRect(state.players[1].pos.x * gridRatio, state.players[1].pos.y * gridRatio, playerSize, playerSize);
+  // P2 Lives
+  if (state.players[1].lives > 0)
+    for (let i = 0; i < state.players[1].lives; i++) {
+      contex.fillRect(state.players[1].pos.x * gridRatio + i * 5, state.players[1].pos.y * gridRatio - 3, 2, 2);
+    }
+  // P2 Inventory
+  contex.fillStyle = "#66ffff";
+  for (let i = 0; i < state.players[1].inventorySpace; i++) {
+    contex.fillRect(state.players[1].pos.x * gridRatio + 36, state.players[1].pos.y * gridRatio + 5 * i, 2, 2);
+  }
+  // P2 Reload
+  contex.fillStyle = "#ffff00";
+  if (state.players[1].reload == false)
+    contex.fillRect(state.players[1].pos.x * gridRatio + 3, state.players[1].pos.y * gridRatio + 3, 6, 2);
+  // -------
 
   // INDICATE PLAYERS WITH FLASHES
   contex.fillStyle = FLASH_COLOR;
@@ -230,7 +290,7 @@ function startCountdown() {
 
 // Keyboard events -----------------------------------------------
 
-/* ### [Keypressed]: Called from eventListener (Left, Up, Right, Down). ### */
+/* ### [Keypressed]: Called from eventListener (Left, Up, Right, Down, G, H). ### */
 function keypressed(event) {
   switch (event.keyCode) {
     case 37:
@@ -244,6 +304,12 @@ function keypressed(event) {
       break;
     case 40:
       socket.emit("keypressed", 40);
+      break;
+    case 71:
+      socket.emit("keypressed", 71);
+      break;
+    case 72:
+      socket.emit("keypressed", 72);
       break;
   }
 }

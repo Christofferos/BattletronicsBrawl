@@ -29,8 +29,8 @@ function createGameState(scoreInput) {
         id: 1,
         fireRateDelay: 100,
         pos: {
-          x: 0,
-          y: 0,
+          x: 1,
+          y: 1,
         },
         directionPreference: [],
         dxdy: {
@@ -38,15 +38,20 @@ function createGameState(scoreInput) {
           y: 0,
         },
         dir: "UP",
-        lives: 0,
+        bullets: [],
+        reload: false,
+        lives: 3,
+        inventorySpace: 3,
+        inventoryAction: false,
+        inventoryCooldown: false,
         playersize: WALL_SIZE,
       },
       {
         id: 2,
         fireRateDelay: 100,
         pos: {
-          x: GRID_SIZE - wallDim,
-          y: GRID_SIZE - wallDim,
+          x: GRID_SIZE - wallDim - 1,
+          y: GRID_SIZE - wallDim - 1,
         },
         directionPreference: [],
         dxdy: {
@@ -54,7 +59,11 @@ function createGameState(scoreInput) {
           y: 0,
         },
         dir: "UP",
-        lives: 0,
+        bullets: [],
+        reload: false,
+        lives: 3,
+        inventorySpace: 3,
+        inventoryCooldown: false,
         playersize: WALL_SIZE,
       },
     ],
@@ -99,6 +108,8 @@ function gameLoop(state) {
     playerTwo.pos.y += playerTwo.dxdy.y;
   }
 
+  updateBullets(state, playerOne, playerTwo, player1Rect, player2Rect);
+
   /* [FOOD EATEN] */
   if (state.food !== null) {
     const food = new Rect(state.food.x, state.food.y, 2, 2);
@@ -118,28 +129,11 @@ function gameLoop(state) {
   }
 
   /* ## IMPORTANT for P1 ## */
-  if (playerOne.dxdy.x || playerOne.dxdy.y) {
-    // ## !IDEA: Make it so that gold can be collected, and upgrade some feature in-game. ##
-    //
-    // ## Hit by bullet ##
-    /* for (let bullet of playerTwo.bullets) {
-      if (bullet.x === playerOne.pos.x && bullet.y === playerOne.pos.y) {
-        playerOne.lives--;
-        // if (lievs == 0) return 2;
-      }
-    } */
-  }
+  if (playerOne.lives <= 0) return 2;
+  // ## !IDEA: Make it so that gold can be collected, and upgrade some feature in-game. ##
 
   /* ## IMPORTANT for P2 ## */
-  if (playerTwo.dxdy.x || playerTwo.dxdy.y) {
-    // ## Hit by bullet ##
-    /* for (let bullet of playerTwo.bullets) {
-      if (bullet.x === playerOne.pos.x && bullet.y === playerOne.pos.y) {
-        playerOne.lives--;
-        // if (lievs == 0) return 2;
-      }
-    } */
-  }
+  if (playerTwo.lives <= 0) return 1;
 
   /* [NO SPECIAL INTERACTION FOUND] */
   return false;
@@ -155,13 +149,115 @@ function randomFood(state) {
   state.food = food;
 }
 
-function keyPressed(keyCode, player) {
-  if (!player.directionPreference.includes(keyCode)) {
-    player.directionPreference.push(keyCode);
+function updateBullets(state, p1, p2, p1Rect, p2Rect) {
+  // Move bullets
+  p1.bullets.forEach((bullet) => {
+    if (bullet.dir == "UP") {
+      bullet.y -= 2;
+    } else if (bullet.dir == "DOWN") {
+      bullet.y += 2;
+    } else if (bullet.dir == "LEFT") {
+      bullet.x -= 2;
+    } else if (bullet.dir == "RIGHT") {
+      bullet.x += 2;
+    }
+  });
+  p2.bullets.forEach((bullet) => {
+    if (bullet.dir == "UP") {
+      bullet.y -= 2;
+    } else if (bullet.dir == "DOWN") {
+      bullet.y += 2;
+    } else if (bullet.dir == "LEFT") {
+      bullet.x -= 2;
+    } else if (bullet.dir == "RIGHT") {
+      bullet.x += 2;
+    }
+  });
+  // Check for collision
+  for (let i = 0; i < p1.bullets.length; i++) {
+    const bulletRect = new Rect(p1.bullets[i].x, p1.bullets[i].y, 2, 2);
+    if (p2Rect.intersects(bulletRect)) {
+      p2.lives--;
+      p1.bullets.splice(i, 1);
+      break;
+    } else {
+      for (let k = 0; k < state.walls.solid.length; k++) {
+        if (bulletRect.intersects(new Rect(state.walls.solid[k].x, state.walls.solid[k].y, 4, 4))) {
+          p1.bullets.splice(i, 1);
+          break;
+        }
+      }
+      for (let k = 0; k < state.walls.movable.length; k++) {
+        if (bulletRect.intersects(new Rect(state.walls.movable[k].x, state.walls.movable[k].y, 4, 4))) {
+          p1.bullets.splice(i, 1);
+          break;
+        }
+      }
+    }
   }
-  const dxdy = calculateDirection(player);
-  player.dxdy.x = dxdy[0];
-  player.dxdy.y = dxdy[1];
+  for (let i = 0; i < p2.bullets.length; i++) {
+    const bulletRect = new Rect(p2.bullets[i].x, p2.bullets[i].y, 2, 2);
+    if (p1Rect.intersects(bulletRect)) {
+      p1.lives--;
+      p2.bullets.splice(i, 1);
+      break;
+    } else {
+      for (let k = 0; k < state.walls.solid.length; k++) {
+        if (bulletRect.intersects(new Rect(state.walls.solid[k].x, state.walls.solid[k].y, 4, 4))) {
+          p2.bullets.splice(i, 1);
+          break;
+        }
+      }
+      for (let k = 0; k < state.walls.movable.length; k++) {
+        if (bulletRect.intersects(new Rect(state.walls.movable[k].x, state.walls.movable[k].y, 4, 4))) {
+          p2.bullets.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }
+}
+
+function keyPressed(keyCode, player) {
+  if (keyCode == 71) {
+    if (player.reload == false) {
+      if (player.dir == "UP") {
+        player.bullets.push({ x: player.pos.x + 1, y: player.pos.y, dir: "UP" });
+      } else if (player.dir == "DOWN") {
+        player.bullets.push({ x: player.pos.x + 1, y: player.pos.y + 4, dir: "DOWN" });
+      } else if (player.dir == "LEFT") {
+        player.bullets.push({ x: player.pos.x, y: player.pos.y + 1, dir: "LEFT" });
+      } else if (player.dir == "RIGHT") {
+        player.bullets.push({ x: player.pos.x + 4, y: player.pos.y + 1, dir: "RIGHT" });
+      }
+      player.reload = true;
+      setTimeout(() => {
+        player.reload = false;
+      }, 500);
+    }
+  } else if (keyCode == 72) {
+    if (player.inventoryCooldown == false) {
+      player.inventoryCooldown = true;
+      // Pick up wall
+      if (player.inventorySpace - 1 >= 0 && collision(player, true)) {
+        player.inventorySpace--;
+      }
+      // Drop wall
+      else if (player.inventorySpace != 3 && wallDropAllowed(player)) {
+        player.inventorySpace++;
+      }
+      setTimeout(() => {
+        player.inventoryCooldown = false;
+      }, 500);
+    }
+  } else {
+    if (!player.directionPreference.includes(keyCode)) {
+      player.directionPreference.push(keyCode);
+    }
+    const dxdy = calculateDirection(player);
+    player.dxdy.x = dxdy[0];
+    player.dxdy.y = dxdy[1];
+  }
 }
 
 function keyReleased(keyCode, player) {
@@ -210,7 +306,7 @@ function calculateDirection(player) {
   return [0, 0];
 }
 
-function collision(player, mustBeMovable) {
+function collision(player, checkForMovableWall) {
   let x1 = 0;
   let x2 = 0;
   let y1 = 0;
@@ -247,42 +343,72 @@ function collision(player, mustBeMovable) {
   const border3 = new Rect(-4, -4, GRID_SIZE + 4, wallSize); // upper ---
   const border4 = new Rect(-4, GRID_SIZE, GRID_SIZE + 4, wallSize); // lower ---
   if (
-    playerRect.intersects(border1) ||
-    playerRect.intersects(border2) ||
-    playerRect.intersects(border3) ||
-    playerRect.intersects(border4)
+    (playerRect.intersects(border1) ||
+      playerRect.intersects(border2) ||
+      playerRect.intersects(border3) ||
+      playerRect.intersects(border4)) &&
+    checkForMovableWall == false
   ) {
     return true;
   }
 
   let wx1, wy1;
   let wall, wallRect;
+  // Solid walls
   for (let i = 0; i < gameState.walls.solid.length; i++) {
     wall = gameState.walls.solid[i];
     wx1 = wall.x;
     wy1 = wall.y;
     wallRect = new Rect(wx1, wy1, wallSize, wallSize);
-
-    if (wallRect.intersects(playerRect)) {
-      /* Collision with movable obstacles. */
-      /* if (mustBeMovable) {
-        if (obstacles.get(i).movable()) {
-          obstacles.remove(i);
-          return true;
-        }
-      } else { */
-      /* Collision with solid obstacles. */
+    if (wallRect.intersects(playerRect) && checkForMovableWall == false) {
       return true;
-      //}
+    }
+  }
+  // Movable walls
+  for (let i = 0; i < gameState.walls.movable.length; i++) {
+    wall = gameState.walls.movable[i];
+    wx1 = wall.x;
+    wy1 = wall.y;
+    wallRect = new Rect(wx1, wy1, wallSize, wallSize);
+    if (wallRect.intersects(playerRect)) {
+      if (checkForMovableWall) {
+        gameState.walls.movable.splice(i, 1);
+      }
+      return true;
     }
   }
   return false;
 }
 
+function wallDropAllowed(player) {
+  const playerSize = 4;
+  const wallSize = 4;
+  let space;
+  if (player.dir == "UP") {
+    space = new Rect(player.pos.x, player.pos.y - wallSize, wallSize, wallSize);
+  } else if (player.dir == "DOWN") {
+    space = new Rect(player.pos.x, player.pos.y + playerSize, wallSize, wallSize);
+  } else if (player.dir == "LEFT") {
+    space = new Rect(player.pos.x - wallSize, player.pos.y, wallSize, wallSize);
+  } else if (player.dir == "RIGHT") {
+    space = new Rect(player.pos.x + playerSize, player.pos.y, wallSize, wallSize);
+  }
+
+  // Check if movable wall intersects with players.
+  /* if (
+    space.intersects(new Rect(gameState.players[0].pos.x, gameState.players[0].pos.y, playerSize, playerSize)) ||
+    space.intersects(new Rect(gameState.players[1].pos.x, gameState.players[1].pos.y, playerSize, playerSize))
+  ) {
+    return false;
+  } */
+  gameState.walls.movable.push({ x: space.x, y: space.y });
+  return true;
+}
+
 function initializePlayingField(state, wallDim) {
   // FROM LEFT TO RIGHT. TOP TO BOTTOM.
 
-  // 4 is wall size
+  // The wall size has a value of: 4
   for (let i = 16; i < 36; i += wallDim) {
     state.walls.solid.push({ x: 10, y: i });
   }
@@ -316,27 +442,36 @@ function initializePlayingField(state, wallDim) {
   }
 
   for (let i = 20; i < 36; i += wallDim) {
-    state.walls.solid.push({ x: 87, y: i });
+    state.walls.solid.push({ x: 86, y: i });
   }
 
   for (let i = 52; i < 72; i += wallDim) {
-    state.walls.solid.push({ x: 87, y: i });
+    state.walls.solid.push({ x: 86, y: i });
   }
+
+  // Movable walls
+  state.walls.movable.push({ x: 3, y: 32 });
+  state.walls.movable.push({ x: 3, y: 56 });
+
+  state.walls.movable.push({ x: 93, y: 32 });
+  state.walls.movable.push({ x: 93, y: 52 });
+
+  state.walls.movable.push({ x: 45, y: 96 });
+
+  for (let i = 44; i < 58; i += wallDim + 1) {
+    state.walls.movable.push({ x: i, y: 4 });
+  }
+
+  for (let i = 20; i < 32; i += wallDim + 1) {
+    state.walls.movable.push({ x: i, y: 76 });
+  }
+
+  for (let i = 72; i < 84; i += wallDim + 1) {
+    state.walls.movable.push({ x: 60, y: i });
+  }
+
+  for (let i = 12; i < 20; i += wallDim + 1) {
+    state.walls.movable.push({ x: 72, y: i });
+  }
+  state.walls.movable.push({ x: 77, y: 17 });
 }
-
-/* function overlap(Point l1, Point r1, Point l2, Point r2) { 
-  // If one rectangle is on left side of other  
-  if (l1.x >= r2.x || l2.x >= r1.x) { 
-      return false; 
-  } 
-
-  // If one rectangle is above other  
-  if (l1.y <= r2.y || l2.y <= r1.y) { 
-      return false; 
-  } 
-
-  return true; 
-}  */
-
-//
-/* spriteName = new Sprite(scene, imgFile, width, height); */
