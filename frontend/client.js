@@ -2,10 +2,11 @@
  -Author: Kristopher Werlinder, 2020.
 //*/
 
-/* ### [DEVELOPMENT]: LOCAL ### */
-// const socket = io("http://localhost:3000");
 /* ### [DEPLOYMENT]: ONLINE ### */
 const socket = io("https://boiling-springs-78440.herokuapp.com/");
+
+/* ### [DEVELOPMENT]: LOCAL ### */
+// const socket = io("http://localhost:3000");
 
 // ------------------------------------------------------------------
 
@@ -37,11 +38,14 @@ newGameButton.addEventListener("click", newGame);
 joinGameButton.addEventListener("click", joinGame);
 
 /* ### Client Variables ### */
+const CANVAS_WIDTH = 850; // <<< Changes here also needs to be done in constants.js
 const BG_COLOR = "black"; // #0e1d34
 const PLAYER_1_COLOR = "red"; //c2c2c2
 const PLAYER_2_COLOR = "green";
 const FLASH_COLOR = "white";
 const POWER_UP_COLOR = "#e66916";
+const WALL_COLOR = "white"; //"#151515";
+
 let canvas, contex;
 let playerNumber;
 let gameActive = false;
@@ -108,7 +112,7 @@ function initializeGameWindow() {
 
   canvas = document.getElementById("canvas");
   contex = canvas.getContext("2d");
-  canvas.width = canvas.height = 850;
+  canvas.width = canvas.height = CANVAS_WIDTH;
   contex.fillStyle = BG_COLOR;
   contex.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -132,34 +136,47 @@ function handleGameState(gameState) {
 function paintGame(state) {
   const food = state.food;
   const gridsize = state.gridsize;
-  const minAnimationSize = canvas.width / gridsize;
-  const playerSize = minAnimationSize * 4;
+  const gridRatio = CANVAS_WIDTH / gridsize; // 8.5
+  const playerSize = state.players[0].playersize; // 34
+  const wallSize = state.walls.wallsize; // 34
 
+  // CANVAS
   contex.fillStyle = BG_COLOR;
-  contex.fillRect(0, 0, canvas.width, canvas.height);
-  contex.fillStyle = POWER_UP_COLOR;
-  contex.fillRect(food.x * minAnimationSize, food.y * minAnimationSize, minAnimationSize, minAnimationSize);
-  paintPlayer(state.players[0], minAnimationSize, playerSize, PLAYER_1_COLOR);
-  paintPlayer(state.players[1], minAnimationSize, playerSize, PLAYER_2_COLOR);
+  contex.fillRect(0, 0, canvas.width, canvas.height); // (x, y, width, height)
 
-  // Add flashing indications.
+  // POWERUPS
+  contex.fillStyle = POWER_UP_COLOR;
+  contex.fillRect(food.x * gridRatio, food.y * gridRatio, gridRatio * 2, gridRatio * 2);
+
+  // WALLS
+  contex.fillStyle = WALL_COLOR;
+  if (state.walls.solid.length !== 0) {
+    const arr = state.walls.solid;
+    arr.forEach((wall) => {
+      contex.fillRect(wall.x * gridRatio, wall.y * gridRatio, wallSize, wallSize);
+    });
+  }
+
+  // PLAYERS
+  contex.fillStyle = PLAYER_1_COLOR;
+  contex.fillRect(state.players[0].pos.x * gridRatio, state.players[0].pos.y * gridRatio, playerSize, playerSize);
+
+  contex.fillStyle = PLAYER_2_COLOR;
+  contex.fillRect(state.players[1].pos.x * gridRatio, state.players[1].pos.y * gridRatio, playerSize, playerSize);
+
+  // INDICATE PLAYERS WITH FLASHES
+  contex.fillStyle = FLASH_COLOR;
   if (playerNumber == 1 && flash < 2) {
     setTimeout(() => {
-      paintPlayer(state.players[0], minAnimationSize, playerSize, FLASH_COLOR);
+      contex.fillRect(state.players[0].pos.x * gridRatio, state.players[0].pos.y * gridRatio, playerSize, playerSize);
     }, 150);
     flash++;
   } else if (playerNumber == 2 && flash < 2) {
     setTimeout(() => {
-      paintPlayer(state.players[1], minAnimationSize, playerSize, FLASH_COLOR);
+      contex.fillRect(state.players[0].pos.x * gridRatio, state.players[0].pos.y * gridRatio, playerSize, playerSize);
     }, 150);
     flash++;
   }
-}
-
-/* ### [PaintPlayer]: (Called from paintGame) ### */
-function paintPlayer(playerState, minAnimationSize, size, color) {
-  contex.fillStyle = color;
-  contex.fillRect(playerState.pos.x * minAnimationSize, playerState.pos.y * minAnimationSize, size, size);
 }
 
 /* ### [HandleGameOver]: There are multiple game overs before the game finishes (Called from startGameInterval, in server) ### */
