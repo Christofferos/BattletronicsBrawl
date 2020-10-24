@@ -244,8 +244,8 @@ function handleGameOver(data) {
   if (!gameActive) return;
   data = JSON.parse(data);
 
-  scoreboard.querySelector(".P1").innerText = data.score.P1 + " Pts.";
-  scoreboard.querySelector(".P2").innerText = data.score.P2 + " Pts.";
+  scoreboard.querySelector(".P1").innerText = " " + data.score.P1 + " Pts.";
+  scoreboard.querySelector(".P2").innerText = " " + data.score.P2 + " Pts.";
   postGameCard.style.display = "block";
 
   if (Math.max(data.score.P1, data.score.P2) >= winningScore) {
