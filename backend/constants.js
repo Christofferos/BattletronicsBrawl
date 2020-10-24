@@ -1,6 +1,6 @@
 /* ### Constants that can be used in any other file ### */
 
-const FRAME_RATE = 60; // 11 (greater value: faster) // Deployment: 40 fps
+const FRAME_RATE = 40; // 11 (greater value: faster) // Deployment: 40 fps
 const GRID_SIZE = 100; // 25 (greater value: smaller blocks)
 const WINNING_SCORE = 5;
 const DELAY_BETWEEN_ROUNDS = 6000;
