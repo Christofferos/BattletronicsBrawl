@@ -1,5 +1,5 @@
 # BattletronicsBrawl
-
+- Socket.io library api: https://socket.io/docs/server-api/
 - Try the application yourself: <a href="https://confident-lalande-d61c58.netlify.app" target="_blank">https://confident-lalande-d61c58.netlify.app</a>
 
 <a href="https://confident-lalande-d61c58.netlify.app">
