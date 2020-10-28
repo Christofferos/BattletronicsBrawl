@@ -153,29 +153,29 @@ function updateBullets(state, p1, p2, p1Rect, p2Rect) {
   // Move bullets
   p1.bullets.forEach((bullet) => {
     if (bullet.dir == "UP") {
-      bullet.y -= 2;
+      bullet.y -= 3;
     } else if (bullet.dir == "DOWN") {
-      bullet.y += 2;
+      bullet.y += 3;
     } else if (bullet.dir == "LEFT") {
-      bullet.x -= 2;
+      bullet.x -= 3;
     } else if (bullet.dir == "RIGHT") {
-      bullet.x += 2;
+      bullet.x += 3;
     }
   });
   p2.bullets.forEach((bullet) => {
     if (bullet.dir == "UP") {
-      bullet.y -= 2;
+      bullet.y -= 3;
     } else if (bullet.dir == "DOWN") {
-      bullet.y += 2;
+      bullet.y += 3;
     } else if (bullet.dir == "LEFT") {
-      bullet.x -= 2;
+      bullet.x -= 3;
     } else if (bullet.dir == "RIGHT") {
-      bullet.x += 2;
+      bullet.x += 3;
     }
   });
   // Check for collision
   for (let i = 0; i < p1.bullets.length; i++) {
-    const bulletRect = new Rect(p1.bullets[i].x, p1.bullets[i].y, 2, 2);
+    const bulletRect = new Rect(p1.bullets[i].x, p1.bullets[i].y, 1, 1);
     if (p2Rect.intersects(bulletRect)) {
       p2.lives--;
       p1.bullets.splice(i, 1);
@@ -196,7 +196,7 @@ function updateBullets(state, p1, p2, p1Rect, p2Rect) {
     }
   }
   for (let i = 0; i < p2.bullets.length; i++) {
-    const bulletRect = new Rect(p2.bullets[i].x, p2.bullets[i].y, 2, 2);
+    const bulletRect = new Rect(p2.bullets[i].x, p2.bullets[i].y, 1, 1);
     if (p1Rect.intersects(bulletRect)) {
       p1.lives--;
       p2.bullets.splice(i, 1);
@@ -354,6 +354,7 @@ function collision(player, checkForMovableWall) {
 
   let wx1, wy1;
   let wall, wallRect;
+
   // Solid walls
   for (let i = 0; i < gameState.walls.solid.length; i++) {
     wall = gameState.walls.solid[i];
@@ -364,6 +365,7 @@ function collision(player, checkForMovableWall) {
       return true;
     }
   }
+
   // Movable walls
   for (let i = 0; i < gameState.walls.movable.length; i++) {
     wall = gameState.walls.movable[i];
@@ -373,6 +375,7 @@ function collision(player, checkForMovableWall) {
     if (wallRect.intersects(playerRect)) {
       if (checkForMovableWall) {
         gameState.walls.movable.splice(i, 1);
+        // console.log("Hit if wall pick up works properly.");
       }
       return true;
     }
@@ -401,6 +404,14 @@ function wallDropAllowed(player) {
   ) {
     return false;
   } */
+
+  // Check if movable wall instersects with other movable walls.
+  for (let i = 0; i < gameState.walls.movable.length; i++) {
+    if (space.intersects(new Rect(gameState.walls.movable[i].x, gameState.walls.movable[i].y, wallSize, wallSize))) {
+      return false;
+    }
+  }
+
   gameState.walls.movable.push({ x: space.x, y: space.y });
   return true;
 }

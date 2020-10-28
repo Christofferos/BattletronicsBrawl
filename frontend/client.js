@@ -155,16 +155,16 @@ function paintGame(state) {
     contex.fillRect(
       state.players[0].bullets[i].x * gridRatio,
       state.players[0].bullets[i].y * gridRatio,
-      gridRatio * 2,
-      gridRatio * 2
+      gridRatio,
+      gridRatio
     );
   }
   for (let i = 0; i < state.players[1].bullets.length; i++) {
     contex.fillRect(
       state.players[1].bullets[i].x * gridRatio,
       state.players[1].bullets[i].y * gridRatio,
-      gridRatio * 2,
-      gridRatio * 2
+      gridRatio,
+      gridRatio
     );
   }
   // -------
@@ -193,17 +193,17 @@ function paintGame(state) {
   // P1 Lives
   if (state.players[0].lives > 0)
     for (let i = 0; i < state.players[0].lives; i++) {
-      contex.fillRect(state.players[0].pos.x * gridRatio + i * 5, state.players[0].pos.y * gridRatio - 3, 2, 2);
+      contex.fillRect(state.players[0].pos.x * gridRatio + i * 7, state.players[0].pos.y * gridRatio - 6, 5, 5);
     }
   // P1 Inventory
   contex.fillStyle = "#66ffff";
-  for (let i = 0; i < state.players[0].inventorySpace; i++) {
-    contex.fillRect(state.players[0].pos.x * gridRatio + 36, state.players[0].pos.y * gridRatio + 5 * i, 2, 2);
+  for (let i = 3; i > state.players[0].inventorySpace; i--) {
+    contex.fillRect(state.players[0].pos.x * gridRatio + 36, state.players[0].pos.y * gridRatio + 18 - 6 * i, 4, 4);
   }
   // P1 Reload
   contex.fillStyle = "#ffff00";
   if (state.players[0].reload == false)
-    contex.fillRect(state.players[0].pos.x * gridRatio - 3, state.players[0].pos.y * gridRatio + 3, 2, 4);
+    contex.fillRect(state.players[0].pos.x * gridRatio - 5, state.players[0].pos.y * gridRatio + 1, 3, 12);
 
   // P2
   contex.fillStyle = PLAYER_2_COLOR;
@@ -211,19 +211,19 @@ function paintGame(state) {
   // P2 Lives
   if (state.players[1].lives > 0)
     for (let i = 0; i < state.players[1].lives; i++) {
-      contex.fillRect(state.players[1].pos.x * gridRatio + i * 5, state.players[1].pos.y * gridRatio - 3, 2, 2);
+      contex.fillRect(state.players[1].pos.x * gridRatio + i * 7, state.players[1].pos.y * gridRatio - 6, 5, 5);
     }
   // P2 Inventory
   contex.fillStyle = "#66ffff";
-  for (let i = 0; i < state.players[1].inventorySpace; i++) {
-    contex.fillRect(state.players[1].pos.x * gridRatio + 36, state.players[1].pos.y * gridRatio + 5 * i, 2, 2);
+  for (let i = 3; i > state.players[1].inventorySpace; i--) {
+    contex.fillRect(state.players[1].pos.x * gridRatio + 36, state.players[1].pos.y * gridRatio + 18 - 6 * i, 4, 4);
   }
   // P2 Reload
   contex.fillStyle = "#ffff00";
   if (state.players[1].reload == false)
-    contex.fillRect(state.players[1].pos.x * gridRatio + 3, state.players[1].pos.y * gridRatio + 3, 6, 2);
+    contex.fillRect(state.players[1].pos.x * gridRatio - 5, state.players[1].pos.y * gridRatio + 1, 3, 12);
   // -------
-
+  /* 
   // INDICATE PLAYERS WITH FLASHES
   contex.fillStyle = FLASH_COLOR;
   if (playerNumber == 1 && flash < 2) {
@@ -236,7 +236,8 @@ function paintGame(state) {
       contex.fillRect(state.players[0].pos.x * gridRatio, state.players[0].pos.y * gridRatio, playerSize, playerSize);
     }, 150);
     flash++;
-  }
+  } 
+  */
 }
 
 /* ### [HandleGameOver]: There are multiple game overs before the game finishes (Called from startGameInterval, in server) ### */
